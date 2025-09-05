@@ -1,9 +1,12 @@
 import re
+from fastapi import Depends
 from todolist import config
-
+from starlette.requests import Request
+from typing import Annotated, Any
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import Session, sessionmaker, DeclarativeBase, declared_attr
+from todolist.database.logging import SessionTracker
 
 def create_db_engine(connection_string: str):
     """Create a database engine with proper timeout settings.
@@ -38,13 +41,21 @@ def resolve_table_name(name):
     return "_".join([x.lower() for x in names if x])
     
 
-
 class Base(DeclarativeBase):
     """Base class for all SQLALchemy models"""
-    __repr_attrs__ = []
-    __repr_max_length__ = 15
-
     @declared_attr.directive
     def __tablename__(cls):
         return resolve_table_name(cls.__name__)
+    
+def get_db(request: Request) -> Session:
+    """Get database session from request state."""
+    session = request.state.db
+    if not hasattr(session, "_todolist_session_id"):
+        session._dispatch_session_id = SessionTracker.track_session(
+            session, context="fastapi_request"
+        )
+    return session
+
+
+DbSession = Annotated[Session, Depends(get_db)]
 
