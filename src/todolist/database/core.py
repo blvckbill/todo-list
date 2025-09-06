@@ -1,8 +1,9 @@
 import re
 from fastapi import Depends
+from contextlib import contextmanager
 from todolist import config
 from starlette.requests import Request
-from typing import Annotated, Any
+from typing import Annotated, Any, Generator
 from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm import Session, sessionmaker, DeclarativeBase, declared_attr
@@ -51,7 +52,7 @@ def get_db(request: Request) -> Session:
     """Get database session from request state."""
     session = request.state.db
     if not hasattr(session, "_todolist_session_id"):
-        session._dispatch_session_id = SessionTracker.track_session(
+        session._todolist_session_id = SessionTracker.track_session(
             session, context="fastapi_request"
         )
     return session
@@ -59,3 +60,17 @@ def get_db(request: Request) -> Session:
 
 DbSession = Annotated[Session, Depends(get_db)]
 
+@contextmanager
+def get_session() -> Generator[Session]:
+    """Context manager to ensure session is closed after use"""
+    session = SessionLocal()
+    session_id = SessionTracker.track_session(session, context="context_manager")
+    try:
+        yield session
+        session.commit()
+    except:
+        session.rollback()
+        raise
+    finally:
+        SessionTracker.untrack_session(session_id)
+        session.close()
