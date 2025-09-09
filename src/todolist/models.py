@@ -2,7 +2,10 @@ from datetime import datetime, timezone
 from sqlalchemy import event
 from sqlalchemy import Column, DateTime
 
+from pydantic import ConfigDict, SecretStr, BaseModel
+from typing import ClassVar
 
+#SQLAlchemy models
 class TimeStampMixin(object):
     """Timestamping mixin for created_at and updated_at fields"""
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
@@ -17,3 +20,18 @@ class TimeStampMixin(object):
     def __declare_last__(cls):
         """Registers the before_update event to update the updated_at field."""
         event.listen(cls, "before_update", cls._updated_at)
+
+#Pydantic models
+class ToDoListBase(BaseModel):
+    """Base Pydantic model with shared config for ToDoList models."""
+    model_config: ClassVar[ConfigDict] = ConfigDict(
+        from_attributes=True,
+        validate_assignment=True,
+        arbitrary_types_allowed=True,
+        str_strip_whitespace=True,
+        json_encoders={
+            # custom output conversion for datetime
+            datetime: lambda v: v.strftime("%Y-%m-%dT%H:%M:%S.%fZ") if v else None,
+            SecretStr: lambda v: v.get_secret_value() if v else None,
+        },
+    )

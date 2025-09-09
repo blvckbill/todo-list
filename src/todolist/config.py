@@ -1,7 +1,16 @@
 from starlette.config import Config
 from starlette.datastructures import Secret
 from urllib import parse
+
+
+
 config = Config(".env")
+
+
+#jwt
+TODOLIST_JWT_SECRET = config("TODOLIST_JWT_SECRET", default=None)
+TODOLIST_JWT_ALG = config("TODOLIST_JWT_ALG", default="HS256")
+TODOLIST_JWT_EXP = config("TODLIST_JWT_EXP", cast=int, default=86400) #seconds
 
 
 
