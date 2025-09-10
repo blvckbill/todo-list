@@ -6,7 +6,7 @@ from pydantic import EmailStr, field_validator
 from datetime import datetime, timezone, timedelta
 from sqlalchemy import Column, String, Integer, LargeBinary, Text, Boolean
 from sqlalchemy.orm import relationship
-from todolist.models import TimeStampMixin, ToDoListBase
+from todolist.models import TimeStampMixin, ToDoListBase, NameStr
 from todolist.database.core import Base
 from todolist.config import (
     TODOLIST_JWT_ALG,
@@ -66,11 +66,16 @@ class TodoListUserTask(Base, TimeStampMixin):
 class UserCreate(ToDoListBase):
     email: EmailStr
     password: str | None = None
-    first_name: str
-    last_name: str
+    first_name: NameStr
+    last_name: NameStr
 
     @field_validator("password", mode="before")
     @classmethod
     def hash(cls, v):
         """hash password before storing"""
         return hash_password(str(v))
+
+class UserTasks(ToDoListBase):
+    task_title: NameStr
+    task_description: NameStr
+    is_completed: bool

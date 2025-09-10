@@ -2,8 +2,11 @@ from datetime import datetime, timezone
 from sqlalchemy import event
 from sqlalchemy import Column, DateTime
 
-from pydantic import ConfigDict, SecretStr, BaseModel
-from typing import ClassVar
+from pydantic import ConfigDict, SecretStr, BaseModel, StringConstraints
+from typing import ClassVar, Annotated
+
+
+NameStr = Annotated[str, StringConstraints(pattern=r".*\S.*", strip_whitespace=True, min_length=3)]
 
 #SQLAlchemy models
 class TimeStampMixin(object):
