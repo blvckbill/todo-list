@@ -48,6 +48,7 @@ class ToDoListUser(Base, TimeStampMixin):
         now = datetime.now(timezone.utc)
         exp = (now + timedelta(seconds=TODOLIST_JWT_EXP)).timestamp()
         data = {
+            "sub": str(self.id),
             "exp": exp,
             "email": self.email
         }
@@ -79,3 +80,11 @@ class UserTasks(ToDoListBase):
     task_title: NameStr
     task_description: NameStr
     is_completed: bool
+
+class UserInfo(ToDoListBase):
+    """Response model for user info"""
+    
+    id: int
+    email: EmailStr
+    first_name: NameStr
+    last_name: NameStr
