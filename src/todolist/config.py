@@ -1,3 +1,5 @@
+from fastapi_mail import ConnectionConfig
+
 from starlette.config import Config
 from starlette.datastructures import Secret
 from urllib import parse
@@ -29,3 +31,18 @@ DATABASE_ENGINE_POOL_RECYCLE = config("DATABASE_ENGINE_POOL_RECYCLE", cast=int, 
 DATABASE_ENGINE_POOL_SIZE = config("DATABASE_ENGINE_POOL_SIZE", cast=int, default=5)
 DATABASE_ENGINE_POOL_TIMEOUT = config("DATABASE_ENGINE_POOL_TIMEOUT", cast=int, default=10)
 SQLALCHEMY_DATABASE_URI = f"postgresql+psycopg2://{_DATABASE_CREDENTIAL_USER}:{_QUOTED_DATABASE_PASSWORD}@{DATABASE_HOSTNAME}:{DATABASE_PORT}/{DATABASE_NAME}"
+
+"otp"
+OTP_EXPIRY_TIME = config("OTP_EXPIRY_TIME")
+
+#email config
+
+conf = ConnectionConfig(
+    MAIL_USERNAME = config("EMAIL_HOST_USER"),
+    MAIL_PASSWORD = config("EMAIL_HOST_PASSWORD"),
+    MAIL_FROM = config("EMAIL_HOST_USER"),
+    MAIL_PORT = config("EMAIL_PORT"),
+    MAIL_SERVER = config("EMAIL_HOST"),
+    MAIL_STARTTLS = True,
+    MAIL_SSL_TLS = False,
+)

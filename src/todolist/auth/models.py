@@ -1,10 +1,10 @@
 import bcrypt
 from jose import jwt
 
-from pydantic import EmailStr, field_validator
+from pydantic import EmailStr, field_validator, ValidationError
 
 from datetime import datetime, timezone, timedelta
-from sqlalchemy import Column, String, Integer, LargeBinary, Text, Boolean
+from sqlalchemy import Column, String, Integer, LargeBinary, Text, Boolean, DateTime, ForeignKey
 from sqlalchemy.orm import relationship
 from todolist.models import TimeStampMixin, ToDoListBase, NameStr
 from todolist.database.core import Base
@@ -21,7 +21,7 @@ def hash_password(password: str):
     salt = bcrypt.gensalt()
     return bcrypt.hashpw(pw, salt)
 
-class ToDoListUser(Base, TimeStampMixin):
+class TodolistUser(Base, TimeStampMixin):
     """SQLAlchemy model for a Todolist User."""
 
     id = Column(Integer, primary_key=True)
@@ -29,6 +29,9 @@ class ToDoListUser(Base, TimeStampMixin):
     first_name = Column(String, nullable=False)
     last_name = Column(String, nullable=False)
     password = Column(LargeBinary, nullable=False)
+    is_verified = Column(Boolean, default=False)
+
+    otp = relationship("OtpModel", back_populates="user", uselist=False)
 
     def set_password(self, password: str):
         """Set a user password before saving to the db"""
@@ -54,11 +57,23 @@ class ToDoListUser(Base, TimeStampMixin):
         }
         return jwt.encode(data, TODOLIST_JWT_SECRET, algorithm=TODOLIST_JWT_ALG)
     
-class TodoListUserTask(Base, TimeStampMixin):
+
+class OtpModel(Base, TimeStampMixin):
+    """SQLAlchemy model for otp"""
+
+    id = Column(Integer, primary_key=True)
+    otp_code = Column(String, nullable=False)
+    otp_expires = Column(DateTime)
+    user_id = Column(Integer, ForeignKey("todolist_user.id"), nullable=False)
+    is_used = Column(Boolean, default=False)
+
+    user = relationship(TodolistUser, back_populates="otp", uselist=False)
+    
+class TodolistUserTask(Base, TimeStampMixin):
     """SQLAlchemy model for the relationship between users and tasks"""
 
     id = Column(Integer, primary_key=True)
-    todolist_user = relationship(ToDoListUser, backref="tasks")
+    todolist_user = relationship(TodolistUser, backref="tasks")
     task_title = Column(String, nullable=False)
     task_description = Column(Text, nullable=True)
     is_completed = Column(Boolean, default=False)
@@ -76,6 +91,12 @@ class UserCreate(ToDoListBase):
         """hash password before storing"""
         return hash_password(str(v))
 
+
+class OtpCode(ToDoListBase):
+    """Pydantic model for user otp"""
+
+    otp_code: str
+
 class UserTasks(ToDoListBase):
     task_title: NameStr
     task_description: NameStr
@@ -88,3 +109,38 @@ class UserInfo(ToDoListBase):
     email: EmailStr
     first_name: NameStr
     last_name: NameStr
+
+class UserLogin(ToDoListBase):
+    email: EmailStr
+    password: str
+
+    @field_validator("password")
+    @classmethod
+    def password_validator(cls, v):
+        """Ensure password field is not empty"""
+        if not v:
+            raise ValidationError("password field can not be empty")
+
+
+class UserAuthResponse(ToDoListBase):
+    """Pydantic model for user register response"""
+
+    detail: str
+    token: str | None = None
+
+class UserPasswordReset(ToDoListBase):
+    """Pydantic model for user password resets."""
+
+    new_password: str
+
+    @field_validator("new_password")
+    @classmethod
+    def validate_password(cls, v):
+        """Validate the new password for length and complexity."""
+        if not v or len(v) < 8:
+            raise ValueError("Password must be at least 8 characters long")
+        if not any(c.isdigit() for c in v):
+            raise ValueError("Password must contain at least one number")
+        if not (any(c.isupper() for c in v) and any(c.islower() for c in v)):
+            raise ValueError("Password must contain both uppercase and lowercase characters")
+        return v
