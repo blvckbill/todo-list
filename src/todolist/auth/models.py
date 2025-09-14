@@ -32,6 +32,7 @@ class TodolistUser(Base, TimeStampMixin):
     is_verified = Column(Boolean, default=False)
 
     otp = relationship("OtpModel", back_populates="user", uselist=False)
+    task = relationship("TodolistuserTask", back_populates="user")
 
     def set_password(self, password: str):
         """Set a user password before saving to the db"""
@@ -55,7 +56,7 @@ class TodolistUser(Base, TimeStampMixin):
             "exp": exp,
             "email": self.email
         }
-        return jwt.encode(data, TODOLIST_JWT_SECRET, algorithm=TODOLIST_JWT_ALG)
+        return jwt.encode(data, TODOLIST_JWT_SECRET, algorithm=TODOLIST_JWT_ALG) #TODO implement refresh_token for token blacklisting 
     
 
 class OtpModel(Base, TimeStampMixin):
@@ -68,15 +69,6 @@ class OtpModel(Base, TimeStampMixin):
     is_used = Column(Boolean, default=False)
 
     user = relationship(TodolistUser, back_populates="otp", uselist=False)
-    
-class TodolistUserTask(Base, TimeStampMixin):
-    """SQLAlchemy model for the relationship between users and tasks"""
-
-    id = Column(Integer, primary_key=True)
-    todolist_user = relationship(TodolistUser, backref="tasks")
-    task_title = Column(String, nullable=False)
-    task_description = Column(Text, nullable=True)
-    is_completed = Column(Boolean, default=False)
 
 
 class UserCreate(ToDoListBase):
@@ -97,10 +89,6 @@ class OtpCode(ToDoListBase):
 
     otp_code: str
 
-class UserTasks(ToDoListBase):
-    task_title: NameStr
-    task_description: NameStr
-    is_completed: bool
 
 class UserInfo(ToDoListBase):
     """Response model for user info"""

@@ -45,6 +45,7 @@ def register(
     db_session: DbSession,
     background_tasks: BackgroundTasks
 ):
+    """This endpoint creates a TodoList user"""
     user = get_by_email(db_session=db_session, email=user_in.email)
     if user:
         raise HTTPException(
@@ -128,6 +129,19 @@ def resend_otp(db_session: DbSession, user_in: UserCreate, background_tasks: Bac
         status_code=status.HTTP_201_CREATED)
 
 
+@auth_router.get("/{user_id}")
+
+def get_user(user_id: int, db_session: DbSession):
+    """Gets a user."""
+    user = get(db_session=db_session, user_id=user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail={"message":"User with this id was not found"}
+        )
+    return user
+
+
 @auth_router.post(
     "/login",
     response_model=UserAuthResponse
@@ -147,15 +161,18 @@ def login(
     )
     
 # @auth_router.post(
-#     "/logout"
+#    "/logout"
 # )
 
-# def logout(db_session: DbSession):
-#     user = get_by_email(db_session=db_session, email) TODO implement logout
+# def logout(db_session: DbSession, current_user: CurrentUser):
+#     user = get(db_session=db_session, user_id=current_user.id)
+    
+#     db_session.close(user) TODO impement logout
 
 @auth_router.post("/forgot-password")
 
 def forgot_password(db_session: DbSession, user_in: UserCreate, background_tasks: BackgroundTasks):
+    """This endpoint sends an otp to a user to reset their password"""
     user = get_by_email(db_session=db_session, email=user_in.email)
     if not user:
         raise HTTPException(
