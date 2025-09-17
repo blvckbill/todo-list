@@ -1,5 +1,7 @@
 
-from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, select, func
+from datetime import date, time
+
+from sqlalchemy import Column, Integer, String, Text, Boolean, ForeignKey, select, func, Date, Time
 from sqlalchemy.orm import relationship
 
 from todolist.database.core import Base
@@ -31,6 +33,8 @@ class TodolistTask(Base, TimeStampMixin):
     list_id = Column(Integer, ForeignKey("todolist.id"), nullable=False)
     task_title = Column(String, nullable=False)
     task_details = Column(Text, nullable=True)
+    due_date = Column(Date, nullable=True)
+    start_time = Column(Time, nullable=True)
     is_completed = Column(Boolean, default=False)
     is_starred = Column(Boolean, default=False)
 
@@ -41,9 +45,49 @@ class TodolistCreate(ToDoListBase):
 
     id: int
     title: str
+    user_id: int
+
+
+class TodolistRead(ToDoListBase):
+    """Pydantic model to read a Todolist"""
+
+    id: int
+    title: str
+
+class TodolistUpdate(ToDoListBase):
+    """Pydantic model to update a list"""
+
+    title: str
+
 
 class TodotaskCreate(ToDoListBase):
-    """Pydantic model for tasks"""
-    id: int
+    """Pydantic model for creating tasks"""
+
+    list_id: int
     task_title: str
     task_details: str | None = None
+    due_date: date | None
+    start_time: time | None
+
+
+class TodotaskRead(ToDoListBase):
+    """Pydantic model to read a Todotask"""
+
+    id: int
+    list_id: int
+    task_title: str
+    task_details: str | None = None
+    due_date: date | None = None
+    start_time: time | None = None
+    is_completed: bool
+    is_starred: bool
+
+
+class TodotaskUpdate(ToDoListBase):
+    """Pydabtic modek to update a Todotask"""
+    task_title: str
+    task_details: str
+    due_date: date | None = None
+    start_time: time | None = None
+    is_completed: bool
+    is_starred: bool
