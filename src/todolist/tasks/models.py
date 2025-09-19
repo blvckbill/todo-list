@@ -45,8 +45,6 @@ class TodolistCreate(ToDoListBase):
 
     id: int
     title: str
-    user_id: int
-
 
 class TodolistRead(ToDoListBase):
     """Pydantic model to read a Todolist"""
@@ -63,7 +61,6 @@ class TodolistUpdate(ToDoListBase):
 class TodotaskCreate(ToDoListBase):
     """Pydantic model for creating tasks"""
 
-    list_id: int
     task_title: str
     task_details: str | None = None
     due_date: date | None
