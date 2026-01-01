@@ -21,6 +21,11 @@ const RegisterPage: React.FC<RegisterPageProps> = ({ onBackToLogin }) => {
   const handleSubmit = async () => {
     setError('');
 
+    if (!formData.email || !formData.password || !formData.confirmPassword || !formData.firstName || !formData.lastName) {
+      setError('Please fill in all fields');
+      return;
+    }
+
     if (formData.password !== formData.confirmPassword) {
       setError('Passwords do not match');
       return;
