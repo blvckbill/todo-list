@@ -13,6 +13,12 @@ const LoginPage: React.FC = () => {
 
   const handleSubmit = async () => {
     setError('');
+
+    if(!email || !password) {
+      setError('Please enter your email and password');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
